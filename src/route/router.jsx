@@ -10,6 +10,7 @@ import About from "../pages/about/About";
 import ContactUs from "../pages/contact/ContactUs";
 import Privacy from "../pages/privacy/Privacy";
 import SafetyGuide from "../pages/safety/SafetyGuide";
+import Login from "../login/Login";
 
 const AppRoutes = () => {
   return (
@@ -27,6 +28,8 @@ const AppRoutes = () => {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/safety-guide" element={<SafetyGuide />} />
       </Route>
+      {/* Authentication */}
+      <Route path="/login" element={<Login />} />
     </Routes>
   );
 };
