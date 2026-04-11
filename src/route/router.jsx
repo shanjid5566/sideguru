@@ -16,6 +16,13 @@ import ForgotPassword from "../pages/login/ForgotPassword";
 import OTPVerification from "../pages/login/OTPVerification";
 import VerifyRegistrationOTP from "../pages/login/VerifyRegistrationOTP";
 import ResetPassword from "../pages/login/ResetPassword";
+import Profile from "../pages/profile/Profile";
+import ManageEvents from "../pages/profile/my-events/ManageEvents";
+import EventPurchaseSuccess from "../pages/profile/my-events/EventPurchaseSuccess";
+import ManageServices from "../pages/profile/my-services/ManageServices";
+import ServicePurchaseSuccess from "../pages/profile/my-services/ServicePurchaseSuccess";
+import AccountSettings from "../pages/profile/my-account/AccountSettings";
+import { UserRoute } from "../context/ProtectedRoutes";
 
 const AppRoutes = () => {
   return (
@@ -32,6 +39,54 @@ const AppRoutes = () => {
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/safety-guide" element={<SafetyGuide />} />
+        <Route
+          path="/profile"
+          element={
+            <UserRoute>
+              <Profile />
+            </UserRoute>
+          }
+        />
+        <Route
+          path="/profile/my-events"
+          element={
+            <UserRoute>
+              <ManageEvents />
+            </UserRoute>
+          }
+        />
+        <Route
+          path="/profile/my-events/purchase-success"
+          element={
+            <UserRoute>
+              <EventPurchaseSuccess />
+            </UserRoute>
+          }
+        />
+        <Route
+          path="/profile/my-services"
+          element={
+            <UserRoute>
+              <ManageServices />
+            </UserRoute>
+          }
+        />
+        <Route
+          path="/profile/my-services/purchase-success"
+          element={
+            <UserRoute>
+              <ServicePurchaseSuccess />
+            </UserRoute>
+          }
+        />
+        <Route
+          path="/profile/account"
+          element={
+            <UserRoute>
+              <AccountSettings />
+            </UserRoute>
+          }
+        />
       </Route>
       {/* Authentication */}
       <Route path="/login" element={<Login />} />
