@@ -13,6 +13,8 @@ import SafetyGuide from "../pages/safety/SafetyGuide";
 import Login from "../login/Login";
 import Signup from "../login/Signup";
 import VerifyRegistrationOTP from "../login/VerifyRegistrationOTP";
+import ForgotPassword from "../login/ForgotPassword";
+import OTPVerification from "../login/OTPVerification";
 
 const AppRoutes = () => {
   return (
@@ -38,6 +40,7 @@ const AppRoutes = () => {
         element={<VerifyRegistrationOTP />}
       />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/otp-verification" element={<OTPVerification />} />
     </Routes>
   );
 };
