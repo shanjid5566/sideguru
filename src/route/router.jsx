@@ -10,11 +10,12 @@ import About from "../pages/about/About";
 import ContactUs from "../pages/contact/ContactUs";
 import Privacy from "../pages/privacy/Privacy";
 import SafetyGuide from "../pages/safety/SafetyGuide";
-import Login from "../login/Login";
-import Signup from "../login/Signup";
-import VerifyRegistrationOTP from "../login/VerifyRegistrationOTP";
-import ForgotPassword from "../login/ForgotPassword";
-import OTPVerification from "../login/OTPVerification";
+import Login from "../pages/login/Login";
+import Signup from "../pages/login/Signup";
+import ForgotPassword from "../pages/login/ForgotPassword";
+import OTPVerification from "../pages/login/OTPVerification";
+import VerifyRegistrationOTP from "../pages/login/VerifyRegistrationOTP";
+import ResetPassword from "../pages/login/ResetPassword";
 
 const AppRoutes = () => {
   return (
