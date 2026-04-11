@@ -11,6 +11,8 @@ import ContactUs from "../pages/contact/ContactUs";
 import Privacy from "../pages/privacy/Privacy";
 import SafetyGuide from "../pages/safety/SafetyGuide";
 import Login from "../login/Login";
+import Signup from "../login/Signup";
+import VerifyRegistrationOTP from "../login/VerifyRegistrationOTP";
 
 const AppRoutes = () => {
   return (
@@ -30,6 +32,12 @@ const AppRoutes = () => {
       </Route>
       {/* Authentication */}
       <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route
+        path="/verify-registration-otp"
+        element={<VerifyRegistrationOTP />}
+      />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
     </Routes>
   );
 };
