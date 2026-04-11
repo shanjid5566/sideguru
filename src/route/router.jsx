@@ -29,6 +29,7 @@ import AdminCategories from "../pages/admin/categories/AdminCategories";
 import AdminUser from "../pages/admin/user/AdminUser";
 import AdminListings from "../pages/admin/listings/AdminListings";
 import AdminListingDetail from "../pages/admin/listings/AdminListingDetail";
+import AdminRevenue from "../pages/admin/revenue/AdminRevenue";
 
 const AppRoutes = () => {
   return (
@@ -118,6 +119,7 @@ const AppRoutes = () => {
         <Route path="user" element={<AdminUser />} />
         <Route path="listings" element={<AdminListings />} />
         <Route path="listings/:id" element={<AdminListingDetail />} />
+        <Route path="revenue" element={<AdminRevenue />} />
       </Route>
     </Routes>
   );
