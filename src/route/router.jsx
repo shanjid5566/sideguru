@@ -40,7 +40,8 @@ const AppRoutes = () => {
         element={<VerifyRegistrationOTP />}
       />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/otp-verification" element={<OTPVerification />} />
+      <Route path="/otp-verification" element={<OTPVerification />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
     </Routes>
   );
 };
