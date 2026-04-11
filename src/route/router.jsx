@@ -25,6 +25,7 @@ import AccountSettings from "../pages/profile/my-account/AccountSettings";
 import { AdminRoute, UserRoute } from "../context/ProtectedRoutes";
 import AdminLayout from "../layout/adminLayout/AdminLayout";
 import Dashboard from "../pages/admin/dashboard/Dashboard";
+import AdminCategories from "../pages/admin/categories/AdminCategories";
 
 const AppRoutes = () => {
   return (
@@ -110,7 +111,7 @@ const AppRoutes = () => {
       >
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
-        
+        <Route path="categories" element={<AdminCategories />} />
       </Route>
     </Routes>
   );
