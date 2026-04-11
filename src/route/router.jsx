@@ -7,6 +7,7 @@ import ServiceDetail from "../pages/services/ServiceDetail";
 import Events from "../pages/events/Events";
 import EventDetail from "../pages/events/EventDetail";
 import About from "../pages/about/About";
+import ContactUs from "../pages/contact/ContactUs";
 
 const AppRoutes = () => {
   return (
@@ -19,7 +20,8 @@ const AppRoutes = () => {
         <Route path="/services/:id" element={<ServiceDetail />} />
         <Route path="/events" element={<Events />} />
         <Route path="/events/:id" element={<EventDetail />} />
-               <Route path="/about" element={<About />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<ContactUs />} />
       </Route>
     </Routes>
   );
