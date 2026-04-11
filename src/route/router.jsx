@@ -9,6 +9,7 @@ import EventDetail from "../pages/events/EventDetail";
 import About from "../pages/about/About";
 import ContactUs from "../pages/contact/ContactUs";
 import Privacy from "../pages/privacy/Privacy";
+import SafetyGuide from "../pages/safety/SafetyGuide";
 
 const AppRoutes = () => {
   return (
@@ -24,6 +25,7 @@ const AppRoutes = () => {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/safety-guide" element={<SafetyGuide />} />
       </Route>
     </Routes>
   );
