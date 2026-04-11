@@ -30,6 +30,8 @@ import AdminUser from "../pages/admin/user/AdminUser";
 import AdminListings from "../pages/admin/listings/AdminListings";
 import AdminListingDetail from "../pages/admin/listings/AdminListingDetail";
 import AdminRevenue from "../pages/admin/revenue/AdminRevenue";
+import AdminPricing from "../pages/admin/pricing/AdminPricing";
+import NotFound from "../pages/NotFound";
 
 const AppRoutes = () => {
   return (
@@ -120,7 +122,9 @@ const AppRoutes = () => {
         <Route path="listings" element={<AdminListings />} />
         <Route path="listings/:id" element={<AdminListingDetail />} />
         <Route path="revenue" element={<AdminRevenue />} />
+        <Route path="pricing" element={<AdminPricing />} />
       </Route>
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
