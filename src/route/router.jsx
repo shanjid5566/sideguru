@@ -22,7 +22,9 @@ import EventPurchaseSuccess from "../pages/profile/my-events/EventPurchaseSucces
 import ManageServices from "../pages/profile/my-services/ManageServices";
 import ServicePurchaseSuccess from "../pages/profile/my-services/ServicePurchaseSuccess";
 import AccountSettings from "../pages/profile/my-account/AccountSettings";
-import { UserRoute } from "../context/ProtectedRoutes";
+import { AdminRoute, UserRoute } from "../context/ProtectedRoutes";
+import AdminLayout from "../layout/adminLayout/AdminLayout";
+import Dashboard from "../pages/admin/dashboard/Dashboard";
 
 const AppRoutes = () => {
   return (
@@ -98,6 +100,18 @@ const AppRoutes = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/otp-verification" element={<OTPVerification />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        }
+      >
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        
+      </Route>
     </Routes>
   );
 };
