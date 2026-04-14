@@ -8,8 +8,9 @@ import Pagination from "../../../components/Pagination";
 import {
   createAdminCategory,
   createAdminSubCategory,
-  deleteServiceCategoryWithSubCategories,
-  deleteServiceSubCategory,
+  deleteAdminEventCategory,
+  deleteAdminServiceCategory,
+  deleteAdminServiceSubCategory,
   fetchAdminCategories,
   updateAdminEventCategory,
   updateAdminServiceCategory,
@@ -56,6 +57,12 @@ const AdminCategories = () => {
     isOpen: false,
     categoryId: "",
     name: "",
+  });
+
+  const [eventDeleteState, setEventDeleteState] = useState({
+    isOpen: false,
+    categoryId: "",
+    categoryName: "",
   });
 
   const [subDeleteState, setSubDeleteState] = useState({
@@ -273,13 +280,31 @@ const AdminCategories = () => {
     }
   };
 
-  const handleDeleteCategory = () => {
-    dispatch(deleteServiceCategoryWithSubCategories({ categoryId: deleteState.categoryId }));
-    toast.success("Category deleted");
-    closeDeleteModal();
+  const handleDeleteCategory = async () => {
+    try {
+      await toast.promise(
+        (async () => {
+          await dispatch(deleteAdminServiceCategory(deleteState.categoryId)).unwrap();
+          await dispatch(fetchAdminCategories()).unwrap();
+        })(),
+        {
+          pending: "Deleting category...",
+          success: "Category deleted",
+          error: {
+            render({ data }) {
+              return data || "Failed to delete category";
+            },
+          },
+        },
+      );
 
-    if (serviceEditor.isOpen && serviceEditor.categoryId === deleteState.categoryId) {
-      closeServiceEditor();
+      closeDeleteModal();
+
+      if (serviceEditor.isOpen && serviceEditor.categoryId === deleteState.categoryId) {
+        closeServiceEditor();
+      }
+    } catch {
+      // handled by toast.promise
     }
   };
 
@@ -351,15 +376,33 @@ const AdminCategories = () => {
     });
   };
 
-  const handleConfirmSubCategoryDelete = () => {
-    dispatch(
-      deleteServiceSubCategory({
-        categoryId: subDeleteState.categoryId,
-        subCategoryId: subDeleteState.subCategoryId,
-      }),
-    );
-    toast.success("Sub category deleted");
-    closeSubCategoryDeleteModal();
+  const handleConfirmSubCategoryDelete = async () => {
+    try {
+      await toast.promise(
+        (async () => {
+          await dispatch(
+            deleteAdminServiceSubCategory({
+              categoryId: subDeleteState.categoryId,
+              subCategoryId: subDeleteState.subCategoryId,
+            }),
+          ).unwrap();
+          await dispatch(fetchAdminCategories()).unwrap();
+        })(),
+        {
+          pending: "Deleting sub category...",
+          success: "Sub category deleted",
+          error: {
+            render({ data }) {
+              return data || "Failed to delete sub category";
+            },
+          },
+        },
+      );
+
+      closeSubCategoryDeleteModal();
+    } catch {
+      // handled by toast.promise
+    }
   };
 
   const openEventCategoryEdit = (category) => {
@@ -375,6 +418,22 @@ const AdminCategories = () => {
       isOpen: false,
       categoryId: "",
       name: "",
+    });
+  };
+
+  const openEventDeleteModal = ({ categoryId, categoryName }) => {
+    setEventDeleteState({
+      isOpen: true,
+      categoryId: String(categoryId),
+      categoryName,
+    });
+  };
+
+  const closeEventDeleteModal = () => {
+    setEventDeleteState({
+      isOpen: false,
+      categoryId: "",
+      categoryName: "",
     });
   };
 
@@ -404,6 +463,30 @@ const AdminCategories = () => {
         },
       );
       closeEventEditModal();
+    } catch {
+      // handled by toast.promise
+    }
+  };
+
+  const handleConfirmEventDelete = async () => {
+    try {
+      await toast.promise(
+        (async () => {
+          await dispatch(deleteAdminEventCategory(eventDeleteState.categoryId)).unwrap();
+          await dispatch(fetchAdminCategories()).unwrap();
+        })(),
+        {
+          pending: "Deleting event category...",
+          success: "Event category deleted",
+          error: {
+            render({ data }) {
+              return data || "Failed to delete event category";
+            },
+          },
+        },
+      );
+
+      closeEventDeleteModal();
     } catch {
       // handled by toast.promise
     }
@@ -687,14 +770,24 @@ const AdminCategories = () => {
                         <tr key={item.id} className="border-b border-[#f3f4f6] text-[#374151] align-top">
                           <td className="px-3 md:px-4 py-3 md:py-4 wrap-break-word">{item.name}</td>
                           <td className="px-3 md:px-4 py-3 md:py-4 whitespace-nowrap">
-                            <button
-                              type="button"
-                              onClick={() => openEventCategoryEdit(item)}
-                              className="inline-flex items-center gap-1 rounded border border-[#f6d3bd] bg-[#fff1e8] px-2.5 py-1.5 text-xs font-medium text-[#c35f20]"
-                              aria-label={`Edit ${item.name}`}
-                            >
-                              <Pencil className="h-3.5 w-3.5" /> Edit
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openEventCategoryEdit(item)}
+                                className="inline-flex items-center gap-1 rounded border border-[#f6d3bd] bg-[#fff1e8] px-2.5 py-1.5 text-xs font-medium text-[#c35f20]"
+                                aria-label={`Edit ${item.name}`}
+                              >
+                                <Pencil className="h-3.5 w-3.5" /> Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => openEventDeleteModal({ categoryId: item.id, categoryName: item.name })}
+                                className="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-600"
+                                aria-label={`Delete ${item.name}`}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" /> Delete
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -709,14 +802,24 @@ const AdminCategories = () => {
                         <div className="min-w-0">
                           <h3 className="text-base font-semibold text-[#111827] wrap-break-word">{item.name}</h3>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => openEventCategoryEdit(item)}
-                          className="inline-flex items-center gap-1 rounded border border-[#f6d3bd] bg-[#fff1e8] px-2 py-1 text-xs text-[#c35f20]"
-                          aria-label={`Edit ${item.name}`}
-                        >
-                          <Pencil className="h-3.5 w-3.5" /> Edit
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => openEventCategoryEdit(item)}
+                            className="inline-flex items-center gap-1 rounded border border-[#f6d3bd] bg-[#fff1e8] px-2 py-1 text-xs text-[#c35f20]"
+                            aria-label={`Edit ${item.name}`}
+                          >
+                            <Pencil className="h-3.5 w-3.5" /> Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openEventDeleteModal({ categoryId: item.id, categoryName: item.name })}
+                            className="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-600"
+                            aria-label={`Delete ${item.name}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Delete
+                          </button>
+                        </div>
                       </div>
                     </article>
                   ))}
@@ -886,6 +989,33 @@ const AdminCategories = () => {
                 className="rounded-md bg-[#e97c35] px-3 py-2 text-sm text-white"
               >
                 Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {eventDeleteState.isOpen && (
+        <div className="fixed inset-0 z-40 bg-black/40 p-4 flex items-center justify-center">
+          <div className="w-full max-w-md rounded-xl border border-[#e5e7eb] bg-white p-4 md:p-5">
+            <h3 className="text-lg font-semibold text-[#111827]">Delete Event Category</h3>
+            <p className="mt-2 text-sm text-[#6b7280]">
+              Are you sure you want to delete <span className="font-medium text-[#111827]">{eventDeleteState.categoryName}</span>?
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeEventDeleteModal}
+                className="rounded-md border border-[#d1d5db] px-3 py-2 text-sm text-[#374151]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmEventDelete}
+                className="rounded-md bg-red-600 px-3 py-2 text-sm text-white"
+              >
+                Delete
               </button>
             </div>
           </div>

@@ -3,8 +3,8 @@
 import axios from 'axios'
 
 
-const BASE_URL = 'https://api-cbreezy.mtscorporate.com/'
-// const BASE_URL = 'http://localhost:3000/'
+const RAW_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://sideguru-backend.vercel.app'
+const BASE_URL = RAW_BASE_URL.endsWith('/') ? RAW_BASE_URL : `${RAW_BASE_URL}/`
 
 
 const apiClient = axios.create({

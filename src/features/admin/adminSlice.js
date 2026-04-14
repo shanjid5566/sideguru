@@ -1,7 +1,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import {
   createAdminCountryAPI,
+  deleteAdminEventCategoryAPI,
   deleteAdminListingAPI,
+  deleteAdminCountryAPI,
   fetchAdminListingByIdAPI,
   fetchAdminListingsAPI,
   createAdminPricingPlanAPI,
@@ -9,8 +11,11 @@ import {
   createEventCategoryAPI,
   createServiceCategoryAPI,
   createServiceSubCategoryAPI,
+  deleteAdminServiceCategoryAPI,
+  deleteAdminServiceSubCategoryAPI,
   deleteAdminUserAPI,
   deleteAdminPricingPlanAPI,
+  deleteAdminRegionAPI,
   fetchAdminCategoriesAPI,
   fetchAdminCountriesWithRegionsAPI,
   fetchAdminDashboardOverviewAPI,
@@ -19,6 +24,9 @@ import {
   fetchAdminUsersAPI,
   updateAdminEventCategoryAPI,
   updateAdminListingStatusAPI,
+  updateAdminCountryAPI,
+  updateAdminPricingPlanAPI,
+  updateAdminRegionAPI,
   updateAdminServiceCategoryAPI,
 } from "./adminAPI";
 
@@ -178,23 +186,69 @@ export const updateAdminEventCategory = createAsyncThunk(
   },
 );
 
-export const fetchAdminPricingData = createAsyncThunk(
-  "admin/fetchAdminPricingData",
-  async (_, { rejectWithValue }) => {
+export const deleteAdminServiceCategory = createAsyncThunk(
+  "admin/deleteAdminServiceCategory",
+  async (categoryId, { rejectWithValue }) => {
     try {
-      const [pricingPlans, locationPayload] = await Promise.all([
-        fetchAdminPricingPlansAPI(),
-        fetchAdminCountriesWithRegionsAPI(),
-      ]);
-
-      return {
-        pricingPlans,
-        countries: locationPayload.countries,
-        regions: locationPayload.regions,
-      };
+      return await deleteAdminServiceCategoryAPI(categoryId);
     } catch (error) {
       return rejectWithValue(getErrorMessage(error));
     }
+  },
+);
+
+export const deleteAdminServiceSubCategory = createAsyncThunk(
+  "admin/deleteAdminServiceSubCategory",
+  async ({ categoryId, subCategoryId }, { rejectWithValue }) => {
+    try {
+      return await deleteAdminServiceSubCategoryAPI({ categoryId, subCategoryId });
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  },
+);
+
+export const deleteAdminEventCategory = createAsyncThunk(
+  "admin/deleteAdminEventCategory",
+  async (categoryId, { rejectWithValue }) => {
+    try {
+      return await deleteAdminEventCategoryAPI(categoryId);
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  },
+);
+
+export const fetchAdminPricingData = createAsyncThunk(
+  "admin/fetchAdminPricingData",
+  async (_, { rejectWithValue }) => {
+    const [pricingResult, locationsResult] = await Promise.allSettled([
+      fetchAdminPricingPlansAPI(),
+      fetchAdminCountriesWithRegionsAPI(),
+    ]);
+
+    const pricingPlans = pricingResult.status === "fulfilled" ? pricingResult.value : [];
+    const locationPayload =
+      locationsResult.status === "fulfilled"
+        ? locationsResult.value
+        : { countries: [], regions: [] };
+
+    const pricingError =
+      pricingResult.status === "rejected" ? getErrorMessage(pricingResult.reason) : null;
+    const locationsError =
+      locationsResult.status === "rejected" ? getErrorMessage(locationsResult.reason) : null;
+
+    if (pricingError && locationsError) {
+      return rejectWithValue(`${pricingError}. ${locationsError}`);
+    }
+
+    return {
+      pricingPlans,
+      countries: locationPayload.countries,
+      regions: locationPayload.regions,
+      pricingError,
+      locationsError,
+    };
   },
 );
 
@@ -203,6 +257,17 @@ export const createAdminPricingPlan = createAsyncThunk(
   async ({ title, price, duration }, { rejectWithValue }) => {
     try {
       return await createAdminPricingPlanAPI({ title, price, duration });
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  },
+);
+
+export const updateAdminPricingPlan = createAsyncThunk(
+  "admin/updateAdminPricingPlan",
+  async ({ pricingPlanId, title, price, duration, isActive = true }, { rejectWithValue }) => {
+    try {
+      return await updateAdminPricingPlanAPI({ pricingPlanId, title, price, duration, isActive });
     } catch (error) {
       return rejectWithValue(getErrorMessage(error));
     }
@@ -232,11 +297,55 @@ export const createAdminCountry = createAsyncThunk(
   },
 );
 
+export const updateAdminCountry = createAsyncThunk(
+  "admin/updateAdminCountry",
+  async ({ countryId, name }, { rejectWithValue }) => {
+    try {
+      return await updateAdminCountryAPI({ countryId, name });
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  },
+);
+
+export const deleteAdminCountry = createAsyncThunk(
+  "admin/deleteAdminCountry",
+  async (countryId, { rejectWithValue }) => {
+    try {
+      return await deleteAdminCountryAPI(countryId);
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  },
+);
+
 export const createAdminRegion = createAsyncThunk(
   "admin/createAdminRegion",
   async ({ countryId, name }, { rejectWithValue }) => {
     try {
       return await createAdminRegionAPI({ countryId, name });
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  },
+);
+
+export const updateAdminRegion = createAsyncThunk(
+  "admin/updateAdminRegion",
+  async ({ countryId, regionId, name }, { rejectWithValue }) => {
+    try {
+      return await updateAdminRegionAPI({ countryId, regionId, name });
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  },
+);
+
+export const deleteAdminRegion = createAsyncThunk(
+  "admin/deleteAdminRegion",
+  async ({ countryId, regionId }, { rejectWithValue }) => {
+    try {
+      return await deleteAdminRegionAPI({ countryId, regionId });
     } catch (error) {
       return rejectWithValue(getErrorMessage(error));
     }
@@ -890,8 +999,8 @@ const adminSlice = createSlice({
       .addCase(fetchAdminPricingData.fulfilled, (state, action) => {
         state.pricingLoading = false;
         state.locationsLoading = false;
-        state.pricingError = null;
-        state.locationsError = null;
+        state.pricingError = action.payload.pricingError;
+        state.locationsError = action.payload.locationsError;
         state.pricingPlans = action.payload.pricingPlans;
         state.countries = action.payload.countries;
         state.regions = action.payload.regions;
@@ -916,6 +1025,21 @@ const adminSlice = createSlice({
       .addCase(createAdminPricingPlan.rejected, (state, action) => {
         state.createPricingLoading = false;
         state.createPricingError = action.payload || "Failed to create pricing plan";
+      })
+      .addCase(updateAdminPricingPlan.pending, (state) => {
+        state.createPricingLoading = true;
+        state.createPricingError = null;
+      })
+      .addCase(updateAdminPricingPlan.fulfilled, (state, action) => {
+        state.createPricingLoading = false;
+        const updated = action.payload;
+        state.pricingPlans = state.pricingPlans.map((plan) =>
+          String(plan.id) === String(updated.id) ? { ...plan, ...updated } : plan,
+        );
+      })
+      .addCase(updateAdminPricingPlan.rejected, (state, action) => {
+        state.createPricingLoading = false;
+        state.createPricingError = action.payload || "Failed to update pricing plan";
       })
       .addCase(deleteAdminPricingPlan.pending, (state, action) => {
         const id = String(action.meta.arg);
@@ -950,6 +1074,51 @@ const adminSlice = createSlice({
         state.createCountryLoading = false;
         state.createCountryError = action.payload || "Failed to create country";
       })
+      .addCase(updateAdminCountry.pending, (state) => {
+        state.createCountryLoading = true;
+        state.createCountryError = null;
+      })
+      .addCase(updateAdminCountry.fulfilled, (state, action) => {
+        state.createCountryLoading = false;
+        const countryId = String(action.payload?.countryId || "");
+        const nextCountry = action.payload?.country;
+
+        state.countries = state.countries.map((country) => {
+          if (String(country.id) !== countryId) return country;
+
+          return {
+            ...country,
+            ...(nextCountry || {}),
+            id: country.id,
+            regions: Array.isArray(nextCountry?.regions) ? nextCountry.regions : country.regions,
+          };
+        });
+
+        state.regions = state.countries.flatMap((country) =>
+          (Array.isArray(country.regions) ? country.regions : []).map((regionItem) => regionItem.name),
+        );
+      })
+      .addCase(updateAdminCountry.rejected, (state, action) => {
+        state.createCountryLoading = false;
+        state.createCountryError = action.payload || "Failed to update country";
+      })
+      .addCase(deleteAdminCountry.pending, (state) => {
+        state.createCountryLoading = true;
+        state.createCountryError = null;
+      })
+      .addCase(deleteAdminCountry.fulfilled, (state, action) => {
+        state.createCountryLoading = false;
+        const countryId = String(action.payload?.countryId || "");
+
+        state.countries = state.countries.filter((country) => String(country.id) !== countryId);
+        state.regions = state.countries.flatMap((country) =>
+          (Array.isArray(country.regions) ? country.regions : []).map((regionItem) => regionItem.name),
+        );
+      })
+      .addCase(deleteAdminCountry.rejected, (state, action) => {
+        state.createCountryLoading = false;
+        state.createCountryError = action.payload || "Failed to delete country";
+      })
       .addCase(createAdminRegion.pending, (state) => {
         state.createRegionLoading = true;
         state.createRegionError = null;
@@ -974,6 +1143,66 @@ const adminSlice = createSlice({
       .addCase(createAdminRegion.rejected, (state, action) => {
         state.createRegionLoading = false;
         state.createRegionError = action.payload || "Failed to create region";
+      })
+      .addCase(updateAdminRegion.pending, (state) => {
+        state.createRegionLoading = true;
+        state.createRegionError = null;
+      })
+      .addCase(updateAdminRegion.fulfilled, (state, action) => {
+        state.createRegionLoading = false;
+        const { countryId, regionId, region } = action.payload;
+
+        state.countries = state.countries.map((country) => {
+          if (String(country.id) !== String(countryId)) return country;
+
+          return {
+            ...country,
+            regions: (Array.isArray(country.regions) ? country.regions : []).map((regionItem) =>
+              String(regionItem.id) === String(regionId)
+                ? {
+                    ...regionItem,
+                    ...(region || {}),
+                    id: regionItem.id,
+                  }
+                : regionItem,
+            ),
+          };
+        });
+
+        state.regions = state.countries.flatMap((country) =>
+          (Array.isArray(country.regions) ? country.regions : []).map((regionItem) => regionItem.name),
+        );
+      })
+      .addCase(updateAdminRegion.rejected, (state, action) => {
+        state.createRegionLoading = false;
+        state.createRegionError = action.payload || "Failed to update region";
+      })
+      .addCase(deleteAdminRegion.pending, (state) => {
+        state.createRegionLoading = true;
+        state.createRegionError = null;
+      })
+      .addCase(deleteAdminRegion.fulfilled, (state, action) => {
+        state.createRegionLoading = false;
+        const { countryId, regionId } = action.payload;
+
+        state.countries = state.countries.map((country) => {
+          if (String(country.id) !== String(countryId)) return country;
+
+          return {
+            ...country,
+            regions: (Array.isArray(country.regions) ? country.regions : []).filter(
+              (regionItem) => String(regionItem.id) !== String(regionId),
+            ),
+          };
+        });
+
+        state.regions = state.countries.flatMap((country) =>
+          (Array.isArray(country.regions) ? country.regions : []).map((regionItem) => regionItem.name),
+        );
+      })
+      .addCase(deleteAdminRegion.rejected, (state, action) => {
+        state.createRegionLoading = false;
+        state.createRegionError = action.payload || "Failed to delete region";
       });
   },
 });

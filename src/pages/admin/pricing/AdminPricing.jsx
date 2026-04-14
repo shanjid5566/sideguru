@@ -6,13 +6,13 @@ import {
   createAdminCountry,
   createAdminPricingPlan,
   createAdminRegion,
-  deleteCountryLocal,
-  deleteRegionLocal,
+  deleteAdminCountry,
   deleteAdminPricingPlan,
+  deleteAdminRegion,
   fetchAdminPricingData,
-  updateCountryLocal,
-  updatePricingPlan,
-  updateRegionLocal,
+  updateAdminPricingPlan,
+  updateAdminCountry,
+  updateAdminRegion,
 } from "../../../features/admin/adminSlice";
 
 const inputClass =
@@ -43,6 +43,10 @@ const AdminPricing = () => {
   const dispatch = useDispatch();
   const pricingPlans = useSelector((state) => state.admin.pricingPlans);
   const countries = useSelector((state) => state.admin.countries);
+  const pricingLoading = useSelector((state) => state.admin.pricingLoading);
+  const locationsLoading = useSelector((state) => state.admin.locationsLoading);
+  const pricingError = useSelector((state) => state.admin.pricingError);
+  const locationsError = useSelector((state) => state.admin.locationsError);
 
   const [openModal, setOpenModal] = useState(null);
   const [editingPlanId, setEditingPlanId] = useState(null);
@@ -141,8 +145,30 @@ const AdminPricing = () => {
     }
 
     if (openModal === "edit-price" && editingPlanId) {
-      dispatch(updatePricingPlan({ id: editingPlanId, title: priceTitle, price: priceValue, duration: priceDuration }));
-      toast.success("Price updated successfully");
+      try {
+        await toast.promise(
+          dispatch(
+            updateAdminPricingPlan({
+              pricingPlanId: editingPlanId,
+              title: priceTitle.trim(),
+              price: priceValue.trim(),
+              duration: priceDuration.trim(),
+              isActive: true,
+            }),
+          ).unwrap(),
+          {
+            pending: "Updating price...",
+            success: "Price updated successfully",
+            error: {
+              render({ data }) {
+                return data || "Failed to update price";
+              },
+            },
+          },
+        );
+      } catch {
+        return;
+      }
     } else {
       try {
         await toast.promise(
@@ -196,8 +222,23 @@ const AdminPricing = () => {
     }
 
     if (openModal === "edit-country" && editingCountryId) {
-      dispatch(updateCountryLocal({ countryId: editingCountryId, name: countryName.trim() }));
-      toast.success("Country updated successfully");
+      try {
+        await toast.promise(
+          dispatch(updateAdminCountry({ countryId: editingCountryId, name: countryName.trim() })).unwrap(),
+          {
+            pending: "Updating country...",
+            success: "Country updated successfully",
+            error: {
+              render({ data }) {
+                return data || "Failed to update country";
+              },
+            },
+          },
+        );
+      } catch {
+        return;
+      }
+
       setCountryName("");
       setEditingCountryId("");
       setOpenModal(null);
@@ -240,14 +281,29 @@ const AdminPricing = () => {
     }
 
     if (openModal === "edit-region" && editingRegionContext.countryId && editingRegionContext.regionId) {
-      dispatch(
-        updateRegionLocal({
-          countryId: editingRegionContext.countryId,
-          regionId: editingRegionContext.regionId,
-          name: regionName.trim(),
-        }),
-      );
-      toast.success("Region updated successfully");
+      try {
+        await toast.promise(
+          dispatch(
+            updateAdminRegion({
+              countryId: editingRegionContext.countryId,
+              regionId: editingRegionContext.regionId,
+              name: regionName.trim(),
+            }),
+          ).unwrap(),
+          {
+            pending: "Updating region...",
+            success: "Region updated successfully",
+            error: {
+              render({ data }) {
+                return data || "Failed to update region";
+              },
+            },
+          },
+        );
+      } catch {
+        return;
+      }
+
       setRegionName("");
       setSelectedCountryIdForRegion("");
       setEditingRegionContext({ countryId: "", regionId: "" });
@@ -277,15 +333,40 @@ const AdminPricing = () => {
     setOpenModal(null);
   };
 
-  const handleConfirmDeleteTarget = () => {
+  const handleConfirmDeleteTarget = async () => {
     if (deleteTarget.type === "country") {
-      dispatch(deleteCountryLocal({ countryId: deleteTarget.countryId }));
-      toast.success("Country deleted successfully");
+      try {
+        await toast.promise(dispatch(deleteAdminCountry(deleteTarget.countryId)).unwrap(), {
+          pending: "Deleting country...",
+          success: "Country deleted successfully",
+          error: {
+            render({ data }) {
+              return data || "Failed to delete country";
+            },
+          },
+        });
+      } catch {
+        return;
+      }
     }
 
     if (deleteTarget.type === "region") {
-      dispatch(deleteRegionLocal({ countryId: deleteTarget.countryId, regionId: deleteTarget.regionId }));
-      toast.success("Region deleted successfully");
+      try {
+        await toast.promise(
+          dispatch(deleteAdminRegion({ countryId: deleteTarget.countryId, regionId: deleteTarget.regionId })).unwrap(),
+          {
+            pending: "Deleting region...",
+            success: "Region deleted successfully",
+            error: {
+              render({ data }) {
+                return data || "Failed to delete region";
+              },
+            },
+          },
+        );
+      } catch {
+        return;
+      }
     }
 
     setDeleteTarget({ type: "", countryId: "", regionId: "", name: "", parentName: "" });
@@ -299,6 +380,11 @@ const AdminPricing = () => {
       countryName: country.name,
     })),
   );
+
+  const isInitialPricingLoad = pricingLoading && pricingPlans.length === 0;
+  const isInitialLocationsLoad = locationsLoading && countries.length === 0;
+  const pricingSkeletonItems = Array.from({ length: 3 }, (_, index) => `pricing-skeleton-${index}`);
+  const locationSkeletonItems = Array.from({ length: 6 }, (_, index) => `location-skeleton-${index}`);
 
   return (
     <div className="relative min-h-screen">
@@ -317,7 +403,18 @@ const AdminPricing = () => {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            {pricingPlans.map((plan) => (
+            {isInitialPricingLoad && pricingSkeletonItems.map((key) => (
+              <div key={key} className="w-full sm:w-55 md:w-61.25 rounded-md border border-[#ececec] bg-white p-3 md:p-4 animate-pulse">
+                <div className="h-3 w-28 rounded bg-[#e5e7eb]" />
+                <div className="mt-3 h-8 w-20 rounded bg-[#d1d5db]" />
+                <div className="mt-2 h-3 w-16 rounded bg-[#e5e7eb]" />
+                <div className="mt-4 flex items-center gap-2">
+                  <div className="h-4 w-4 rounded bg-[#e5e7eb]" />
+                  <div className="h-4 w-4 rounded bg-[#e5e7eb]" />
+                </div>
+              </div>
+            ))}
+            {!isInitialPricingLoad && pricingPlans.map((plan) => (
               <div key={plan.id} className="w-full sm:w-55 md:w-61.25 rounded-md border border-[#ececec] bg-white p-3 md:p-4">
                 <p className="text-[11px] md:text-[13px] text-[#717171] font-medium">{plan.title}</p>
                 <p className="mt-2 text-xl sm:text-2xl md:text-[30px] leading-tight font-bold text-[#004C48]">{plan.price}</p>
@@ -332,6 +429,11 @@ const AdminPricing = () => {
                 </div>
               </div>
             ))}
+            {!isInitialPricingLoad && !pricingLoading && pricingPlans.length === 0 && (
+              <div className="w-full rounded-md border border-[#ececec] bg-white p-4 text-sm text-[#6b7280]">
+                {pricingError || "No pricing plans found."}
+              </div>
+            )}
           </div>
         </div>
 
@@ -349,7 +451,13 @@ const AdminPricing = () => {
 
           <div className="space-y-2 md:space-y-3">
             <div className="flex flex-wrap gap-2 md:gap-3">
-              {countries.map((item) => (
+              {isInitialLocationsLoad && locationSkeletonItems.map((key) => (
+                <span
+                  key={key}
+                  className="inline-flex h-9 w-32 items-center rounded-full border border-[#e5e7eb] bg-[#f3f4f6] animate-pulse"
+                />
+              ))}
+              {!isInitialLocationsLoad && countries.map((item) => (
                 <span
                   key={item.id || item.name}
                   className="inline-flex items-center gap-2 rounded-full border border-[#2db18e] px-3 sm:px-4 md:px-5 py-1.5 md:py-2 text-xs sm:text-sm md:text-[14px] text-[#12a57f] bg-[#ecf8f4] whitespace-nowrap"
@@ -379,6 +487,11 @@ const AdminPricing = () => {
                   </button>
                 </span>
               ))}
+                {!isInitialLocationsLoad && !locationsLoading && countries.length === 0 && (
+                <div className="w-full rounded-md border border-[#ececec] bg-white p-4 text-sm text-[#6b7280]">
+                  {locationsError || "No countries found."}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -397,7 +510,13 @@ const AdminPricing = () => {
 
           <div className="space-y-2 md:space-y-3">
             <div className="flex flex-wrap gap-2 md:gap-3">
-              {regionItems.map((item) => (
+              {isInitialLocationsLoad && locationSkeletonItems.map((key) => (
+                <span
+                  key={`region-${key}`}
+                  className="inline-flex h-9 w-40 items-center rounded-full border border-[#e5e7eb] bg-[#f3f4f6] animate-pulse"
+                />
+              ))}
+              {!isInitialLocationsLoad && regionItems.map((item) => (
                 <span
                   key={`${item.countryId}-${item.id || item.name}`}
                   className="inline-flex items-center gap-2 rounded-full border border-[#2db18e] px-3 sm:px-4 md:px-5 py-1.5 md:py-2 text-xs sm:text-sm md:text-[14px] text-[#12a57f] bg-[#ecf8f4] whitespace-nowrap"
@@ -435,6 +554,11 @@ const AdminPricing = () => {
                   </button>
                 </span>
               ))}
+                {!isInitialLocationsLoad && !locationsLoading && regionItems.length === 0 && (
+                <div className="w-full rounded-md border border-[#ececec] bg-white p-4 text-sm text-[#6b7280]">
+                  {locationsError || "No regions found."}
+                </div>
+              )}
             </div>
           </div>
         </div>

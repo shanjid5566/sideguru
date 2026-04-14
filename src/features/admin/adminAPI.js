@@ -103,9 +103,24 @@ const buildSales = (salesPerformance = {}) => {
 };
 
 export const fetchAdminDashboardOverviewAPI = async (period = "thisYear") => {
-  const response = await apiClient.get("/api/admin/dashboard/overview", {
-    params: { period },
-  });
+  let response;
+
+  try {
+    response = await apiClient.get("/api/dashboard/overview", {
+      params: { period },
+    });
+  } catch (error) {
+    const status = error?.response?.status;
+
+    // Keep support for older backend route while preferring the current endpoint.
+    if (status === 404) {
+      response = await apiClient.get("/api/admin/dashboard/overview", {
+        params: { period },
+      });
+    } else {
+      throw error;
+    }
+  }
 
   const payload = response?.data?.data || {};
   const normalizedPeriod = payload?.filter?.period || period;
@@ -496,7 +511,6 @@ export const updateAdminServiceCategoryAPI = async ({ categoryId, categoryName, 
     existingSubcategories.map((item) =>
       apiClient.patch("/api/admin/categories/service", {
         categoryId: normalizedCategoryId,
-        categoryName: normalizedCategoryName,
         subcategoryId: item.id,
         subcategoryName: item.name,
       }),
@@ -536,8 +550,49 @@ export const updateAdminEventCategoryAPI = async ({ categoryId, categoryName }) 
   };
 };
 
+export const deleteAdminServiceCategoryAPI = async (categoryId) => {
+  const normalizedCategoryId = String(categoryId || "").trim();
+  await apiClient.delete(`/api/admin/categories/service/${normalizedCategoryId}`);
+  return {
+    categoryId: normalizedCategoryId,
+  };
+};
+
+export const deleteAdminServiceSubCategoryAPI = async ({ categoryId, subCategoryId }) => {
+  const normalizedCategoryId = String(categoryId || "").trim();
+  const normalizedSubCategoryId = String(subCategoryId || "").trim();
+
+  await apiClient.delete(
+    `/api/admin/categories/service/${normalizedCategoryId}/subcategories/${normalizedSubCategoryId}`,
+  );
+
+  return {
+    categoryId: normalizedCategoryId,
+    subCategoryId: normalizedSubCategoryId,
+  };
+};
+
+export const deleteAdminEventCategoryAPI = async (categoryId) => {
+  const normalizedCategoryId = String(categoryId || "").trim();
+  await apiClient.delete(`/api/admin/categories/event/${normalizedCategoryId}`);
+  return {
+    categoryId: normalizedCategoryId,
+  };
+};
+
 export const fetchAdminPricingPlansAPI = async () => {
-  const response = await apiClient.get("/api/pricing-plans");
+  let response;
+
+  try {
+    response = await apiClient.get("/api/pricing");
+  } catch (error) {
+    if (error?.response?.status === 404) {
+      response = await apiClient.get("/api/pricing-plans");
+    } else {
+      throw error;
+    }
+  }
+
   return normalizeList(response.data).map(normalizePricingPlan).filter((plan) => plan.id);
 };
 
@@ -562,8 +617,41 @@ export const createAdminPricingPlanAPI = async ({ title, price, duration }) => {
   return normalizePricingPlan(responsePayload || payload);
 };
 
+export const updateAdminPricingPlanAPI = async ({ pricingPlanId, title, price, duration, isActive }) => {
+  const normalizedPrice = normalizePriceInput(price);
+  const normalizedDurationRaw = String(duration || "").trim();
+  const normalizedDurationNumeric = Number(normalizedDurationRaw);
+
+  const payload = {
+    title: String(title || "").trim(),
+    price: normalizedPrice.numeric ?? normalizedPrice.raw,
+    duration: Number.isFinite(normalizedDurationNumeric) ? normalizedDurationNumeric : normalizedDurationRaw,
+    isActive: typeof isActive === "boolean" ? isActive : true,
+  };
+
+  const response = await apiClient.patch(`/api/pricing/${pricingPlanId}`, payload);
+  const responsePayload = extractPayload(response.data);
+
+  return normalizePricingPlan({
+    id: responsePayload?.id ?? pricingPlanId,
+    ...payload,
+    ...responsePayload,
+  });
+};
+
 export const deleteAdminPricingPlanAPI = async (pricingPlanId) => {
-  const response = await apiClient.delete(`/api/pricing-plans/${pricingPlanId}`);
+  let response;
+
+  try {
+    response = await apiClient.delete(`/api/pricing/${pricingPlanId}`);
+  } catch (error) {
+    if (error?.response?.status === 404) {
+      response = await apiClient.delete(`/api/pricing-plans/${pricingPlanId}`);
+    } else {
+      throw error;
+    }
+  }
+
   return response?.data;
 };
 
@@ -590,6 +678,28 @@ export const createAdminCountryAPI = async (name) => {
   return normalizeCountry(payload);
 };
 
+export const updateAdminCountryAPI = async ({ countryId, name }) => {
+  const normalizedCountryId = String(countryId || "").trim();
+  const response = await apiClient.patch(`/api/locations/countries/${normalizedCountryId}`, {
+    name: String(name || "").trim(),
+  });
+
+  const payload = extractPayload(response.data);
+  return {
+    countryId: normalizedCountryId,
+    country: normalizeCountry(payload),
+  };
+};
+
+export const deleteAdminCountryAPI = async (countryId) => {
+  const normalizedCountryId = String(countryId || "").trim();
+  await apiClient.delete(`/api/locations/countries/${normalizedCountryId}`);
+
+  return {
+    countryId: normalizedCountryId,
+  };
+};
+
 export const createAdminRegionAPI = async ({ countryId, name }) => {
   const response = await apiClient.post(`/api/locations/countries/${countryId}/regions`, {
     name: String(name || "").trim(),
@@ -599,5 +709,38 @@ export const createAdminRegionAPI = async ({ countryId, name }) => {
   return {
     countryId: String(countryId),
     region: normalizeRegion(payload),
+  };
+};
+
+export const updateAdminRegionAPI = async ({ countryId, regionId, name }) => {
+  const normalizedCountryId = String(countryId || "").trim();
+  const normalizedRegionId = String(regionId || "").trim();
+
+  const response = await apiClient.patch(
+    `/api/locations/countries/${normalizedCountryId}/regions/${normalizedRegionId}`,
+    {
+      name: String(name || "").trim(),
+    },
+  );
+
+  const payload = extractPayload(response.data);
+  return {
+    countryId: normalizedCountryId,
+    regionId: normalizedRegionId,
+    region: normalizeRegion(payload),
+  };
+};
+
+export const deleteAdminRegionAPI = async ({ countryId, regionId }) => {
+  const normalizedCountryId = String(countryId || "").trim();
+  const normalizedRegionId = String(regionId || "").trim();
+
+  await apiClient.delete(
+    `/api/locations/countries/${normalizedCountryId}/regions/${normalizedRegionId}`,
+  );
+
+  return {
+    countryId: normalizedCountryId,
+    regionId: normalizedRegionId,
   };
 };
