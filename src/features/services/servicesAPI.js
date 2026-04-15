@@ -167,6 +167,7 @@ export const fetchServicesAPI = async (params = {}) => {
 
   const requestParams = {
     ...params,
+    listingType: "SERVICE",
     priceRange: normalizedPriceRange,
     categoryId: normalizedCategoryId,
     category: normalizedCategoryId,
@@ -179,7 +180,7 @@ export const fetchServicesAPI = async (params = {}) => {
     region: normalizedRegionId,
   };
 
-  const response = await apiClient.get("/api/services", { params: requestParams });
+  const response = await apiClient.get("/api/listings", { params: requestParams });
 
   return {
     items: normalizeServices(response.data),
